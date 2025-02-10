@@ -1,6 +1,6 @@
 # Controller-k8
 
-We have created simple kubernete cluster sing minikube and helm. Once deployed completely as per the steps shared in this file Kubernete cluster of Rabiitmq Broker, Producer and Consumer will be up and running.
+We have created simple kubernete cluster using minikube and helm. Once deployed completely as per the steps shared in this file Kubernete cluster of Rabiitmq Broker, Producer and Consumer will be up and running.
 
 Also, we have create custom autoscaler KDE( Kubernetes Event-Driven Autoscaling). We have deployed it within consumer subcharts to scale consumer pods by monitoring rabbitmq queue depth(ready state queue) from Rabbitmq Broker.
 
@@ -229,7 +229,7 @@ keda-hpa-rabbitmq-consumer-scaler   Deployment/consumer   24/20 (avg)   1       
 keda-hpa-rabbitmq-consumer-scaler   Deployment/consumer   0/20 (avg)    1         3         2          12m
 ```
 
-## Some usefule commands for verifiation:
+## Some useful commands for verifiation and troubleshooting:
 ```shell
 tejas@ubuntu:~/minikube/Controller-k8$ kubectl describe hpa keda-hpa-rabbitmq-consumer-scaler
 Name:                                               keda-hpa-rabbitmq-consumer-scaler
@@ -259,4 +259,10 @@ Events:
   ----    ------             ----                   ----                       -------
   Normal  SuccessfulRescale  4m54s                  horizontal-pod-autoscaler  New size: 1; reason: All metrics below target
   Normal  SuccessfulRescale  2m24s (x2 over 9m55s)  horizontal-pod-autoscaler  New size: 2; reason: external metric s0-rabbitmq-test_queue(&LabelSelector{MatchLabels:map[string]string{scaledobject.keda.sh/name: rabbitmq-consumer-scaler,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+
+
+$ yamllint controller-mq/templates/rabbitmq-broker.yaml
+$ helm template . | kubectl apply --dry-run=client -f -
+$ helm lint
+$ kubectl run -it --rm --image=busybox dns-test --restart=Never -- nslookup rabbitmq-broker-default.svc.cluster.local
 ```
