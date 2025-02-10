@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: producer
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: producer
+  template:
+    metadata:
+      labels:
+        app: producer
+    spec:
+      imagePullSecrets:
+        - name: {{.Values.producer_node.imagePullSecrets}}
+      containers:
+        - name: producer-node
+          image: {{.Values.producer_node.image}}
+          imagePullPolicy: {{.Values.producer_node.imagePullPolicy}}
+          env:
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.producer_node.SecretName}}
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.producer_node.SecretName}}
+                  key: RABBITMQ_PASSWORD
+            - name: RABBITMQ_HOSTNAME
+              value: "{{ .Values.producer_node.broker_hostname }}"
+            - name: RABBITMQ_QUEUE
+              value: "{{ .Values.producer_node.queue_name }}"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"        

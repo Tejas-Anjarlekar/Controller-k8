@@ -1,0 +1,12 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq-auth
+spec:
+  secretTargetRef:
+    - parameter: username
+      name: {{.Values.consumer_node.SecretName}}
+      key: RABBITMQ_USERNAME
+    - parameter: password
+      name: {{.Values.consumer_node.SecretName}}
+      key: RABBITMQ_PASSWORD

@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-broker
+  
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq-broker
+  template:
+    metadata:
+      labels:
+        app: rabbitmq-broker
+    spec:
+      containers:
+        - name: rabbitmq-broker
+          image: {{.Values.rabbitmq_broker.image}}
+          imagePullPolicy: {{.Values.rabbitmq_broker.imagePullPolicy}}
+          ports:
+            - name: amqp
+              containerPort: 5672
+            - name: management
+              containerPort: 15672
+          env:
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.rabbitmq_broker.SecretName}}
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.rabbitmq_broker.SecretName}}
+                  key: RABBITMQ_PASSWORD
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "500Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1000Mi"       
+
+          command: 
+            - "/bin/bash" 
+            - "-c"
+            - | 
+              echo "Starting RabbitMQ...";
+              rabbitmq-server & 
+              echo "Waiting for RabbitMQ to be ready...";
+              while ! rabbitmq-diagnostics check_running; do
+                echo "RabbitMQ is not ready yet... Retrying in 5s";
+                sleep 5;
+              done
+
+              echo "RabbitMQ is running!";
+              rabbitmqctl add_user "$RABBITMQ_USERNAME" "$RABBITMQ_PASSWORD" || echo "User exists";
+              rabbitmqctl set_user_tags "$RABBITMQ_USERNAME" administrator;
+              rabbitmqctl set_permissions -p / "$RABBITMQ_USERNAME" ".*" ".*" ".*";
+
+              echo "Setup complete. Keeping container running...";
+              wait $(pgrep rabbitmq-server);
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-broker
+  labels:
+    app: rabbitmq-broker
+spec:
+  type: {{.Values.rabbitmq_broker.Service.type}}
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: managemnet
+      port: 15672
+      targetPort: 15672
+      nodePort: 30000
+  selector:
+    app: rabbitmq-broker

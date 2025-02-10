@@ -1,0 +1,9 @@
+From python:3.9
+
+# Install required packages
+RUN pip3 install --upgrade pip && \
+    pip3 install pika
+
+COPY ./producer_node.py /opt/producer_node.py
+
+CMD ["python3", "/opt/producer_node.py"]

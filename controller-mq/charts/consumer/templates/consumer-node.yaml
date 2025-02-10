@@ -1,0 +1,37 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      imagePullSecrets:
+        - name: {{.Values.consumer_node.imagePullSecrets}}
+      containers:
+        - name: producer-node
+          image: {{.Values.consumer_node.image}}
+          imagePullPolicy: {{.Values.consumer_node.imagePullPolicy}}
+          env:
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.consumer_node.SecretName}}
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.consumer_node.SecretName}}
+                  key: RABBITMQ_PASSWORD
+            - name: RABBITMQ_HOSTNAME
+              value: "{{ .Values.consumer_node.broker_hostname }}"
+            - name: RABBITMQ_QUEUE
+              value: "{{ .Values.consumer_node.queue_name }}"

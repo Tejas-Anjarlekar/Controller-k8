@@ -1,0 +1,18 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: rabbitmq-consumer-scaler
+spec:
+  scaleTargetRef:
+    name: consumer
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  triggers:
+    - type: rabbitmq
+      metadata:
+        host: amqp://{{ .Values.consumer_node.broker_hostname }}:5672
+        queueName: {{ .Values.consumer_node.queue_name }}
+        mode: QueueLength
+        value: "{{.Values.consumer_node.queue_length}}"
+      authenticationRef:
+        name: rabbitmq-auth
